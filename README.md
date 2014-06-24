@@ -48,7 +48,7 @@ router.navigate('/hello/foo', { foo: 'bar' }, true);
 
 `new Router([base], [callback])`
 
-`base` (String) should be set in case you're not operating at the root path ('/') of the domain. The optional `callback` is fired after all callbacks of every matched route have been called. It should follow this signature `function (err, obj) {}`.
+`base` (String) should be set in case you're not operating at the root path `/` of the domain. The optional `callback` is fired after all callbacks of every matched route have been called. It should follow this signature `function (err, obj) {}`.
 
 ### \#add
 
@@ -60,7 +60,7 @@ You can add as many callbacks as you need. This is internally handled by the [`w
 
 Remember to call `next` when you're done so the next callback in line can be fired.
 
-Routes are matched in the ordered they were `add`ed, and they are matched using the famous [`path-to-regexp`](https://www.npmjs.org/package/path-to-regexp) module, used by Express among many others, so regular expressions are supported and all that.
+Routes are matched in the order they were `add`ed, and they are matched using the famous [`path-to-regexp`](https://www.npmjs.org/package/path-to-regexp) module, used by Express among many others, so regular expressions are supported and all that.
 
 ### \#route 
 
