@@ -1,7 +1,7 @@
 {
   "name": "poptart",
   "description": "Client-side router.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "repository": {
     "type": "git",
     "url": "git://github.com/acstll/poptart.git"
