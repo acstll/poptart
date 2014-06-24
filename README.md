@@ -10,15 +10,15 @@ With [npm](http://npmjs.org) do:
 npm install poptart
 ```
 
-## Stability
-
-Documentation is incomplete, and API should be considered unstable.
-
 ## Browser support
 
 Modern browsers plus IE10 and up.   
 See [Can I use](http://caniuse.com/#search=history) for the `history` API.
 (Proper testing is on the todo list.)
+
+## Stability
+
+Documentation is incomplete, and API should be considered unstable.
 
 ## Usage
 
@@ -82,7 +82,7 @@ Options being:
 
 - `trigger`: Boolean. Fire the callbacks bound to the path.
 - `replace`: Boolean. Call `replaceState` instead of `pushState` on `history`.
-- `title`: String. Browser's document title, currently ignored by must browsers, see [MDN](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history#The_pushState%28%29.C2.A0method).
+- `title`: String. Browser's document title, currently ignored by most browsers, see [MDN](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history#The_pushState%28%29.C2.A0method).
 
 This will update the browser's URL with the new path by calling `window.history.pushState` with the state object you pass in. If you want to fire the callbacks bound to the route add `{ trigger: true }` to the `options` object.
 

@@ -58,7 +58,7 @@ Router.prototype.navigate = function (path, state, options) {
   var action = options.replace ? 'replaceState' : 'pushState';
 
   window.history[action](state, title, path);
-  if (options.trigger) this.run();
+  if (options.trigger) this.run({ state: state });
 };
 
 Router.prototype.run = function (event) {

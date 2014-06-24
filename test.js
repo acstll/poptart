@@ -25,7 +25,7 @@ test('starting', function (t) {
 });
 
 test('starting 2', function (t) {
-  t.plan(7);
+  t.plan(8);
 
   function cb1 (obj, next) {
     t.ok(obj, 'cb1 called');
@@ -37,6 +37,7 @@ test('starting 2', function (t) {
   function cb2 (obj, next) {
     t.ok(obj, 'cb2 called');
     t.ok(obj.event, 'event object there');
+    t.equal(obj.state.a, 1, 'state there');
     next();
   }
 
@@ -47,7 +48,7 @@ test('starting 2', function (t) {
   });
 
   setTimeout(function () {
-    router.navigate('/foo/roger/123', {}, { trigger: true });
+    router.navigate('/foo/roger/123', { a: 1 }, { trigger: true });
   }, 1000);
 
   t.ok(router.routes[0].keys, 'this.keys ok');
