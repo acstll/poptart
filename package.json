@@ -1,0 +1,33 @@
+{
+  "name": "popstate",
+  "description": "Client-side router.",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/acstll/poptart.git"
+  },
+  "homepage": "https://github.com/acstll/poptart",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/beefy test.js"
+  },
+  "dependencies": {
+    "eventemitter3": "^0.1.2",
+    "path-to-regexp": "^0.1.0",
+    "ware": "^0.3.0"
+  },
+  "devDependencies": {
+    "tape": "^2.13.3",
+    "beefy": "^1.1.0",
+    "watchify": "^0.6.1"
+  },
+  "keywords": [
+    "client",
+    "browser",
+    "popstate",
+    "history",
+    "router"
+  ],
+  "author": "Arturo Castillo Delgado <19@8302.net>",
+  "license": "MIT"
+}
