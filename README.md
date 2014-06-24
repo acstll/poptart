@@ -27,7 +27,7 @@ var Router = require('poptart');
 
 var router = new Router();
 
-router.add('/hello/:name', function (obj) {
+router.add('/hello/:name', function (obj, next) {
   var name = obj.params.name; // Url params
   var foo = obj.state.foo; // Your state object
   var event = obj.event; // Original `popstate` event
@@ -35,6 +35,8 @@ router.add('/hello/:name', function (obj) {
   console.log(name, foo);
   // => "foo", "bar"
   // ...
+
+  next();
 });
 
 router.start();
