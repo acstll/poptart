@@ -42,7 +42,7 @@ router.navigate('/hello/foo', { foo: 'bar' }, true);
 
 ### \#add
 
-`router.add(path, callback, […callback])`
+`router.add(path, callback, [...callback])`
 
 You can add as many callbacks as you need. This is internally handled by the [`ware`](https://www.npmjs.org/package/ware) module.
 Routes are matched in the ordered they were `add`ed, and they are matched using the famous [`path-to-regexp`](https://www.npmjs.org/package/path-to-regexp) module, used by Express among many others.
