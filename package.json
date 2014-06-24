@@ -1,7 +1,7 @@
 {
-  "name": "popstate",
+  "name": "poptart",
   "description": "Client-side router.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "git://github.com/acstll/poptart.git"
@@ -12,9 +12,9 @@
     "test": "./node_modules/.bin/beefy test.js"
   },
   "dependencies": {
-    "eventemitter3": "^0.1.2",
-    "path-to-regexp": "^0.1.0",
-    "ware": "^0.3.0"
+    "ware": "^0.3.0",
+    "path-to-regexp": "^0.2.1",
+    "eventemitter3": "^0.1.2"
   },
   "devDependencies": {
     "tape": "^2.13.3",

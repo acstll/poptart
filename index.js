@@ -6,10 +6,15 @@ var EventEmitter = require('eventemitter3').EventEmitter;
 
 module.exports = Router;
 
-function Router (callback) {
+function Router (base, callback) {
+  if (typeof base === 'function') {
+    callback = base;
+    base = '';
+  }
+
+  this.base = base || '';
   this.callback = callback;
   this.routes = [];
-  this.base = '';
   this.onpopstate = this.run.bind(this);
 
   EventEmitter.call(this);
@@ -29,6 +34,8 @@ Router.prototype.route =
 Router.prototype.add = function (path) {
   var callbacks = [].slice.call(arguments);
   callbacks.shift();
+
+  if (path === '*') path = /.*/;
   
   this.routes.push(new Route(path, callbacks));
   return this;

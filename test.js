@@ -21,7 +21,6 @@ test('starting', function (t) {
   }
 
   router.add('/', cb1, cb2);
-  // router.base = '/foo';
   router.start();
 });
 
@@ -57,14 +56,15 @@ test('starting 2', function (t) {
 test('navigate method signature', function (t) {
   t.plan(2);
 
-  var noop = function (state, next) {
-    t.ok(state, 'called once');
+  var noop = function (obj, next) {
+    t.ok(obj, 'called once');
     next();
   };
 
   router.add('/bar/:id', noop);
-  router.add('*', function (ctx) {
-    t.ok(ctx, 'called from * route');
+  router.add('*', function (obj, next) {
+    t.ok(obj, 'called from * route');
+    next();
   });
 
   setTimeout(function () {
