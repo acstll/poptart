@@ -1,130 +1,139 @@
-var ware = require('ware');
-var pathToExp = require('path-to-regexp');
-var EventEmitter = require('eventemitter3').EventEmitter;
+var ware = require('ware')
+var pathToExp = require('path-to-regexp')
+var extend = require('xtend')
 
+// TODO
+// try to implement pathToExp.compile()
+// https://github.com/pillarjs/path-to-regexp#compile-reverse-path-to-regexp
 
-
-module.exports = Router;
+module.exports = Router
 
 function Router (base, callback) {
+  var self = this
   if (typeof base === 'function') {
-    callback = base;
-    base = '';
+    callback = base
+    base = ''
   }
 
-  this.base = base || '';
-  this.callback = callback;
-  this.routes = [];
-  this.onpopstate = this.run.bind(this);
-
-  EventEmitter.call(this);
+  self.base = base || ''
+  self.callback = callback
+  self.routes = []
+  self.onpopstate = self.run.bind(self)
 }
 
-Router.prototype = Object.create(EventEmitter.prototype);
-
 Router.prototype.start = function (run) {
-  window.addEventListener('popstate', this.onpopstate);
+  var self = this
+
+  window.addEventListener('popstate', self.onpopstate)
+
   if (run !== false) {
-    this.navigate(this.onpopstate(), null, { replace: true });
+    self.navigate(self.onpopstate(), {
+      replace: true,
+      trigger: false
+    })
   }
-  this.emit('start');
-};
+}
 
 Router.prototype.route =
 Router.prototype.add = function (path) {
-  var callbacks = [].slice.call(arguments);
-  callbacks.shift();
+  var self = this
+  var callbacks = [].slice.call(arguments)
+  callbacks.shift()
 
-  if (path === '*') path = /.*/;
-  
-  this.routes.push(new Route(path, callbacks));
-  return this;
-};
-
-Router.prototype.navigate = function (path, state, options) {
-  if (typeof state === 'boolean') {
-    options = { trigger: !!state };
-    state = {};
-  } else if (!options || typeof options === 'boolean') {
-    options = {
-      trigger: !!options,
-      replace: false
-    };
+  if (path === '*') {
+    path = /.*/
   }
+  self.routes.push(new Route(path, callbacks))
 
-  path = this.base + path;
-
-  var title = options.title || null;
-  var action = options.replace ? 'replaceState' : 'pushState';
-
-  window.history[action](state, title, path);
-  if (options.trigger) this.run({ state: state });
-};
-
-Router.prototype.run = function (event) {
-  if (!event) event = {};
-  var pathname = window.location.pathname;
-  var callback = this.callback;
-
-  if (pathname.indexOf(this.base) > -1) {
-    pathname = pathname.slice(this.base.length);
-  }
-    
-  this.routes.forEach(function (route) {
-    var path = pathname || '/';
-    var match = route.match(path, event, callback);
-
-    if (match !== false) this.emit('match', path);
-  }.bind(this));
-
-  return pathname;
-};
-
-Router.prototype.stop = function () {
-  window.removeEventListener('popstate', this.onpopstate);
-};
-
-Router.Route = Route;
-
-function Route (path, callbacks) {
-  this.keys = []
-  this.re = pathToExp(path, this.keys);
-  var _ware = this.ware = ware();
-
-  callbacks.forEach(function (fn) {
-    _ware.use(fn);
-  });
+  return self
 }
 
-Route.prototype.match = function(path, event, callback) {
-  var key, value, len, i;
-  var obj = {};
-  obj.params = [];
-  obj.event = event || {};
-  obj.state = obj.event.state;
+Router.prototype.navigate = function (path, options) {
+  var self = this
 
-  var result = this.re.exec(path);
+  options = extend({
+    trigger: true,
+    replace: false,
+    title: null,
+    state: {}
+  }, options)
 
-  if (!result) return false;
+  path = this.base + path
 
-  for (i = 1, len = result.length; i < len; i++) {
-    var key = this.keys[i - 1];
-    var value = typeof result[i] == 'string'
-        ? window.decodeURI(result[i])
-        : result[i];
+  var title = options.title
+  var action = options.replace ? 'replaceState' : 'pushState'
 
-    if (key) {
-      obj.params[key.name] = obj.params[key.name] !== undefined
-        ? obj.params[key.name]
-        : value;
-    } else {
-      obj.params.push(value);
+  window.history[action](options.state, title, path)
+
+  if (options.trigger) {
+    self.run({ state: options.state })
+  }
+}
+
+Router.prototype.run = function (event) {
+  event = event || {}
+  var self = this
+  var pathname = window.location.pathname
+  var finalCallback = self.callback
+
+  if (pathname.indexOf(self.base) > -1) {
+    pathname = pathname.slice(self.base.length)
+  }
+
+  self.routes.forEach(function (route) {
+    var path = pathname || '/'
+    return route.match(path, event, finalCallback)
+  })
+
+  return pathname
+}
+
+Router.prototype.stop = function () {
+  var self = this
+  window.removeEventListener('popstate', self.onpopstate)
+}
+
+Router.Route = Route
+
+function Route (path, callbacks) {
+  var self = this
+  var w = self.ware = ware()
+  self.keys = []
+  self.re = pathToExp(path, self.keys)
+
+  callbacks.forEach(function (fn) {
+    w.use(fn)
+  })
+}
+
+Route.prototype.match = function (path, event, callback) {
+  var self = this
+  var key, value, len, i
+  var obj = {}
+  var params = obj.params = []
+  obj.event = event || {}
+  obj.state = obj.event.state
+
+  var result = self.re.exec(path)
+
+  if (!result) {
+    return false
+  }
+
+  // https://github.com/visionmedia/page.js/blob/master/index.js#L495-L501
+  for (i = 1, len = result.length; i < len; ++i) {
+    key = self.keys[i - 1]
+    value = window.decodeURIComponent(result[i])
+    if (value !== undefined || !(hasOwnProperty.call(params, key.name))) {
+      params[key.name] = value
     }
   }
 
   if (typeof callback === 'function') {
-    this.ware.run(obj, callback);
+    this.ware.run(obj, callback)
   } else {
-    this.ware.run(obj);
+    this.ware.run(obj)
   }
-};
+
+  return true
+}

@@ -1,54 +1,54 @@
 # Poptart
 
-Yet another JavaScript client-side router.
+Yet another JavaScript client-side router. No hashchange support, only History.
 
 ## Install
 
 With [npm](http://npmjs.org) do:
 
 ```bash
-npm install poptart
+npm install acstll/poptart --save
 ```
+
+you see this is not on the npm registry yet.
 
 ## Browser support
 
-Modern browsers plus IE10 and up.   
+Anything that supports the `history` API. Namely modern browsers plus IE10 and up.
 See [Can I use](http://caniuse.com/#search=history) for the `history` API.
-(Proper testing is on the todo list.)
-
-## Stability
-
-Documentation is incomplete, and API should be considered unstable.
 
 ## Usage
 
 ```js
-var Router = require('poptart');
+var Router = require('poptart')
 
-var router = new Router();
+var router = new Router()
 
 router.add('/hello/:name', function (obj, next) {
   var name = obj.params.name; // Url params
   var foo = obj.state.foo; // Your state object
   var event = obj.event; // Original `popstate` event
 
-  console.log(name, foo);
-  // => "foo", "bar"
-  // ...
+  console.log(name)
+  // => "world"
+  console.log(foo)
+  // => "bar"
 
-  next();
-});
+  next()
+})
 
-router.start();
+router.start()
 
-router.navigate('/hello/foo', { foo: 'bar' }, true);
+router.navigate('/hello/world', {
+  state: { foo: 'bar' }
+})
 ```
 
 ## API
 
 ### Router
 
-`new Router([base], [callback])`
+`new Router([base][, callback])`
 
 `base` (String) should be set in case you're not operating at the root path `/` of the domain. The optional `callback` is fired after all callbacks of every matched route have been called. It should follow this signature `function (err, obj) {}`.
 
@@ -64,33 +64,38 @@ Remember to call `next` when you're done so the next callback in line can be fir
 
 Routes are matched in the order they were `add`ed, and they are matched using the famous [`path-to-regexp`](https://www.npmjs.org/package/path-to-regexp) module, used by Express among many others, so regular expressions are supported and all that.
 
-### \#route 
+Please check out the `path-to-regexp` [documentation](https://github.com/pillarjs/path-to-regexp#parameters) to know more about route options.
+
+Also checkout the [live demo](http://forbeslindesay.github.io/express-route-tester/) (pretty useful)!
+
+### \#route
 
 `add` alias.
 
 ### \#start
 
-`router.start()`
+`router.start([trigger])`
 
 Router starts listening for `popstate` events.
 
 ### \#navigate
 
-`router.navigate(path, [state], [options])`
+`router.navigate(path, [options])`
 
 Options being:
 
-- `trigger`: Boolean. Fire the callbacks bound to the path.
-- `replace`: Boolean. Call `replaceState` instead of `pushState` on `history`.
+- `state`: Object. The state you want to keep in History for that path.
+- `trigger`: Boolean. Fire the callbacks bound to the path. (Default: true)
+- `replace`: Boolean. Call `replaceState` instead of `pushState` on `history`. (Default: false).
 - `title`: String. Browser's document title, currently ignored by most browsers, see [MDN](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history#The_pushState%28%29.C2.A0method).
 
-This will update the browser's URL with the new path by calling `window.history.pushState` with the state object you pass in. If you want to fire the callbacks bound to the route add `{ trigger: true }` to the `options` object.
-
-If you don't need to pass a state object and you want to trigger the callbacks, you can use `router.navigate(path, true)`. But keep in mind the `options` object should always be the third argument. This won't work: `router.navigate(path, { replace: true })`, but this will: `router.navigate(path, {}, { replace: true })`.
+This will update the browser's URL with the new path by calling `window.history.pushState` with the state object you pass in.
 
 ### \#stop
 
 `router.stop()`
+
+Stop listening for `popstate` events.
 
 ## License
 

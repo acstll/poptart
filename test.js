@@ -1,92 +1,122 @@
-var test = require('tape');
+var test = require('tape')
 
-var Router = require('./');
-var router = new Router();
+var Router = require('./')
+var router
 
+var DURATION = 50
 
+function defer (fn) {
+  DURATION += DURATION
+  return setTimeout(fn, DURATION)
+}
 
-// TODO: proper tests that make sense
-// https://github.com/visionmedia/page.js/blob/master/test/tests.js
+test('callbacks, start', function (t) {
+  t.plan(4)
 
-test('starting', function (t) {
-  t.plan(2);
-
-  function cb1 (obj, next) {
-    t.ok(obj, 'cb1 called');
-    next();
-  }
-  function cb2 (obj, next) {
-    t.ok(obj, 'cb2 called');
-    next();
-  }
-
-  router.add('/', cb1, cb2);
-  router.start();
-});
-
-test('starting 2', function (t) {
-  t.plan(8);
+  router = new Router(null, function (err, obj) {
+    if (err) {
+      t.skip()
+    }
+    t.pass('final callback fired')
+  })
 
   function cb1 (obj, next) {
-    t.ok(obj, 'cb1 called');
-    t.equal(obj.params.name, 'roger', 'params ok 1');
-    t.equal(obj.params.id, '123', 'params ok 2');
-    console.log('EVENT', obj.event);
-    next();
+    t.pass('first callback fired')
+    next()
   }
   function cb2 (obj, next) {
-    t.ok(obj, 'cb2 called');
-    t.ok(obj.event, 'event object there');
-    t.equal(obj.state.a, 1, 'state there');
-    next();
+    t.pass('second callback fired')
+    next()
+  }
+  function cb3 (obj, next) {
+    t.pass('third callback fired')
+    next()
   }
 
-  router.add('/foo/:name/:id', cb1, cb2);
+  router.add('/', cb1, cb2, cb3)
+  router.start()
 
-  router.once('match', function (path) {
-    t.equal(path, '/foo/roger/123', 'match event emitted');
-  });
+  router.callback = null
+})
 
-  setTimeout(function () {
-    router.navigate('/foo/roger/123', { a: 1 }, { trigger: true });
-  }, 1000);
+test('navigate', function (t) {
+  t.plan(6)
 
-  t.ok(router.routes[0].keys, 'this.keys ok');
-});
+  var state = { a: 1 }
 
-test('navigate method signature', function (t) {
-  t.plan(2);
+  function cb1 (obj, next) {
+    t.ok(Array.isArray(obj.params), '`params` passed and is array')
+    t.equal(obj.params.name, 'bar', 'params values are ok (1)')
+    t.equal(obj.params.id, '1', 'params values ok are (2)')
+    next()
+  }
+  function cb2 (obj, next) {
+    t.ok(obj.event, 'event object is there')
+    t.equal(obj.state, state, 'passed in state is there and ok')
+    next()
+  }
 
-  var noop = function (obj, next) {
-    t.ok(obj, 'called once');
-    next();
-  };
+  router.add('/foo/:name/:id', cb1, cb2)
 
-  router.add('/bar/:id', noop);
-  router.add('*', function (obj, next) {
-    t.ok(obj, 'called from * route');
-    next();
-  });
+  defer(function () {
+    router.navigate('/foo/bar/1', { state: state })
 
-  setTimeout(function () {
-    router.navigate('/bar/1');
-    setTimeout(function () {
-      router.navigate('/bar/2', true);
-      setTimeout(function () {
-        router.navigate('/bar/3', { beep: 'boop' });
-      }, 500);
-    }, 500);
-  }, 1500);
-});
+    t.equal(window.location.pathname, '/foo/bar/1', 'pathname on windows got set')
+  })
+})
 
-/*
-router.navigate('/bar/3', {}, { trigger: false })
-  === router.navigate('/bar/3')
-  === router.navigate('/bar/3', {})
+test('popstate event object', function (t) {
+  t.plan(2)
 
-router.navigate('/bar/3', true)
-  === router.navigate('/bar/3', {}, true)
-  === router.navigate('/bar/3', {}, { trigger: true })
+  router.routes.shift()
 
-router.navigate('/bar/3', { replace: true }) === FAIL!
-*/
+  router.add('/', function (obj, next) {
+    t.equal(obj.event.type, 'popstate', 'passed in correctly')
+    next()
+  })
+
+  defer(function () {
+    window.history.back()
+  })
+
+  router.add('/foo', function (obj, next) {
+    t.equal(obj.event.type, undefined, 'faux-popstate event object passed in too')
+    next()
+  })
+
+  defer(function () {
+    router.navigate('/foo')
+  })
+})
+
+test('{ trigger: false }, start(false)', function (t) {
+  t.plan(1)
+
+  function cb () {
+    t.skip('won’t trigger')
+  }
+
+  router.add('/ok', cb)
+  router.navigate('/ok', { trigger: false })
+  router.stop()
+  router.start(false)
+  cb()
+})
+
+test('* as not found', function (t) {
+  t.plan(2)
+
+  router.add('/found', function () {
+    t.pass('not triggered when something matched')
+  })
+  router.add('*', function () {
+    t.pass('triggered otherwise')
+  })
+
+  defer(function () {
+    router.navigate('/found')
+  })
+  defer(function () {
+    router.navigate('/not-found')
+  })
+})
