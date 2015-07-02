@@ -1,7 +1,7 @@
 {
   "name": "poptart",
   "description": "Client-side router",
-  "version": "0.2.2",
+  "version": "1.0.0",
   "dist-tag": {
     "latest": "1.0.0"
   },
