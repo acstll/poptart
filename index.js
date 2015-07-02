@@ -80,7 +80,7 @@ Router.prototype.run = function (event) {
     pathname = pathname.slice(self.base.length)
   }
 
-  self.routes.forEach(function (route) {
+  self.routes.some(function (route) {
     var path = pathname || '/'
     return route.match(path, event, finalCallback)
   })

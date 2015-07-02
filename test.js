@@ -3,10 +3,10 @@ var test = require('tape')
 var Router = require('./')
 var router
 
-var DURATION = 50
+var DURATION = 0
 
 function defer (fn) {
-  DURATION += DURATION
+  DURATION = DURATION + 50
   return setTimeout(fn, DURATION)
 }
 
@@ -97,26 +97,68 @@ test('{ trigger: false }, start(false)', function (t) {
   }
 
   router.add('/ok', cb)
-  router.navigate('/ok', { trigger: false })
-  router.stop()
-  router.start(false)
+
+  defer(function () {
+    router.navigate('/ok', { trigger: false })
+    router.stop()
+    router.start(false)
+  })
+
   cb()
 })
 
 test('* as not found', function (t) {
   t.plan(2)
 
-  router.add('/found', function () {
+  router.add('/found', function (obj, next) {
     t.pass('not triggered when something matched')
+    next()
   })
-  router.add('*', function () {
-    t.pass('triggered otherwise')
+  router.add('*', function (obj, next) {
+    t.pass('triggered otherwise ' + obj.state)
+    next()
   })
 
   defer(function () {
-    router.navigate('/found')
+    router.navigate('/found', { state: 1 })
+    router.navigate('/not-found', { state: 2 })
   })
+})
+
+test('base other than /', function (t) {
+  t.plan(1)
+
+  router.base = '/api'
+  router.routes.pop() // remove '*' route
+
+  router.add('/resource/:id', function (obj, next) {
+    t.equal(obj.params.id, '123', 'works')
+  })
+
   defer(function () {
-    router.navigate('/not-found')
+    router.navigate('/api', { trigger: false })
+    router.navigate('/resource/123')
+  })
+
+  defer(function () {
+    router.stop()
+    router.navigate('')
+  })
+})
+
+test('stop', function (t) {
+  t.plan(1)
+
+  router.base = ''
+  router.navigate('/', { trigger: false })
+  router.routes = []
+
+  router.add('/done', function () {
+    t.skip('removes popstate event listener')
+  })
+
+  defer(function () {
+    router.stop()
+    router.navigate('/done')
   })
 })
