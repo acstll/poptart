@@ -54,7 +54,7 @@ router.navigate('/hello/world', {
 
 ### \#add
 
-`router.add(path, callback, [callback ...])`
+`router.add(path[, callback ...])`
 
 You can add as many callbacks as you need. This is internally handled by the [`ware`](https://www.npmjs.org/package/ware) module, so the callback signature should be the following:
 
@@ -76,11 +76,13 @@ Also checkout the [live demo](http://forbeslindesay.github.io/express-route-test
 
 `router.start([trigger])`
 
-Router starts listening for `popstate` events.
+Router starts listening for `popstate` events. Pass `false` to avoid a first run plus a `replaceState` call.
 
 ### \#navigate
 
-`router.navigate(path, [options])`
+`router.navigate(path[, options])`
+
+`path` should be a string, starting with a slash (always).
 
 Options being:
 
