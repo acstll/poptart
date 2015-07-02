@@ -141,23 +141,7 @@ test('base other than /', function (t) {
   })
 
   defer(function () {
-    router.stop()
-    router.navigate('')
-  })
-})
-
-test('stop', function (t) {
-  t.plan(1)
-
-  router.base = ''
-  router.navigate('/', { trigger: false })
-  router.routes = []
-
-  router.add('/done', function () {
-    t.skip('removes popstate event listener')
-  })
-
-  defer(function () {
+    router.base = ''
     router.stop()
     router.navigate('/done')
   })
