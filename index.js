@@ -112,7 +112,7 @@ Route.prototype.match = function (path, event, callback) {
   var obj = {}
   var params = obj.params = []
   obj.event = event || {}
-  obj.state = obj.event.state
+  obj.state = obj.event.state || {}
 
   var result = self.re.exec(path)
 

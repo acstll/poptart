@@ -40,7 +40,7 @@ test('callbacks, start', function (t) {
 })
 
 test('navigate', function (t) {
-  t.plan(6)
+  t.plan(7)
 
   var state = { a: 1 }
 
@@ -55,13 +55,21 @@ test('navigate', function (t) {
     t.equal(obj.state, state, 'passed in state is there and ok')
     next()
   }
+  function cb3 (obj, next) {
+    t.equal(typeof obj.state, 'object', 'obj.state is an empty object by default')
+    next()
+  }
 
   router.add('/foo/:name/:id', cb1, cb2)
+  router.add('/foo/:name', cb3)
 
   defer(function () {
     router.navigate('/foo/bar/1', { state: state })
+    t.equal(window.location.pathname, '/foo/bar/1', 'pathname on windows gets set')
+  })
 
-    t.equal(window.location.pathname, '/foo/bar/1', 'pathname on windows got set')
+  defer(function () {
+    router.navigate('/foo/baz')
   })
 })
 
@@ -69,14 +77,13 @@ test('popstate event object', function (t) {
   t.plan(2)
 
   router.routes.shift()
-
   router.add('/', function (obj, next) {
     t.equal(obj.event.type, 'popstate', 'passed in correctly')
     next()
   })
 
   defer(function () {
-    window.history.back()
+    window.history.go(-2)
   })
 
   router.add('/foo', function (obj, next) {
