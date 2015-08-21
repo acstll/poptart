@@ -38,7 +38,7 @@ test('Callbacks, start and stop', function (t) {
 })
 
 test('Navigate', function (t) {
-  t.plan(3)
+  t.plan(4)
 
   var router = createRouter(history)
 
@@ -49,7 +49,11 @@ test('Navigate', function (t) {
 
   t.throws(function () {
     router.navigate('foo')
-  }, 'throws is called without params when needed')
+  }, 'throws if called without params when needed')
+
+  t.throws(function () {
+    router.navigate('666')
+  }, 'throws if route doesn’t exist')
 
   router.navigate('foo', { id: 1 })
   t.equal(window.location.pathname, '/foo/1', 'works with params')
