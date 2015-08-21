@@ -1,6 +1,6 @@
 # Poptart
 
-Yet another JavaScript client-side router. No hashchange support, only History.
+JavaScript client-side router.
 
 ## Install
 
@@ -12,49 +12,52 @@ npm install acstll/poptart --save
 
 you see this is not on the npm registry yet.
 
-## Browser support
-
-Anything that supports the `history` API. Namely modern browsers plus IE10 and up.
-See [Can I use](http://caniuse.com/#search=history) for the `history` API.
-
 ## Usage
 
 ```js
-var Router = require('poptart')
+var createRouter = require('poptart-router')
+var history = require('history')()
 
-var router = new Router()
+var router = createRouter(history)
 
-router.add('/hello/:name', function (obj, next) {
-  var name = obj.params.name; // Url params
-  var foo = obj.state.foo; // Your state object
-  var event = obj.event; // Original `popstate` event
+function callback (obj, next) {
+  var name = obj.params.name; // url params
+  var foo = obj.location.state; // your state object
+  
+  // history's location object is available
+  // http://rackt.github.io/history/stable/Location.html
 
   console.log(name)
-  // => "world"
   console.log(foo)
-  // => "bar"
+  
+  next() // allow the next callback to fire
+}
 
-  next()
-})
+router.add('hello', '/hello/:name', callback)
 
 router.start()
 
-router.navigate('/hello/world', {
+router.navigate('hello', { name: 'world' }, {
   state: { foo: 'bar' }
 })
+
+// => "world"
+// => "bar"
 ```
 
 ## API
 
-### Router
+### createRouter
 
-`new Router([base][, callback])`
+`createRouter(history[, base, callback])`
 
-`base` (String) should be set in case you're not operating at the root path `/` of the domain. The optional `callback` is fired after all callbacks of every matched route have been called. It should follow this signature `function (err, obj) {}`.
+- `history` [history](http://npm.im/history)
+- `base` (String) should be set in case you're not operating at the root path `/` of the domain.
+- `callback` is fired after all callbacks of every matched route have been called. It should follow this signature `function (err, obj) {}`.
 
 ### \#add
 
-`router.add(path[, callback ...])`
+`router.add(name, path[, callback...])`
 
 You can add as many callbacks as you need. This is internally handled by the [`ware`](https://www.npmjs.org/package/ware) module, so the callback signature should be the following:
 
@@ -74,24 +77,23 @@ Also checkout the [live demo](http://forbeslindesay.github.io/express-route-test
 
 ### \#start
 
-`router.start([trigger])`
+`router.start()`
 
-Router starts listening for `popstate` events. Pass `false` to avoid a first run plus a `replaceState` call.
+Router starts listening for `popstate` events.
 
 ### \#navigate
 
-`router.navigate(path[, options])`
+`router.navigate(name[, params, options])`
 
-`path` should be a string, starting with a slash (always).
+- `name` The route name
+- `params` Object…
 
 Options being:
 
 - `state`: Object. The state you want to keep in History for that path.
-- `trigger`: Boolean. Fire the callbacks bound to the path. (Default: true)
 - `replace`: Boolean. Call `replaceState` instead of `pushState` on `history`. (Default: false).
-- `title`: String. Browser's document title, currently ignored by most browsers, see [MDN](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history#The_pushState%28%29.C2.A0method).
 
-This will update the browser's URL with the new path by calling `window.history.pushState` with the state object you pass in.
+This will update the browser's URL and fire any callbacks.
 
 ### \#stop
 
