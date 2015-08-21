@@ -1,139 +1,136 @@
+
 var ware = require('ware')
 var pathToExp = require('path-to-regexp')
 var extend = require('xtend')
 
-// TODO
-// try to implement pathToExp.compile()
-// https://github.com/pillarjs/path-to-regexp#compile-reverse-path-to-regexp
+/*
+  TODO
+  - check route name exists to avoid duplicates
+  - splats: https://github.com/aaronblohowiak/routes.js/blob/master/index.js#L88
+*/
 
-module.exports = Router
+module.exports = function router (history, base, callback) {
+  base = base || ''
+  callback = callback || function () {}
+  var routes = []
+  var stopListening
+  var currentIndex
 
-function Router (base, callback) {
-  var self = this
-  if (typeof base === 'function') {
-    callback = base
-    base = ''
+  function start () {
+    stopListening = history.listen(run)
+    return this
   }
 
-  self.base = base || ''
-  self.callback = callback
-  self.routes = []
-  self.onpopstate = self.run.bind(self)
-}
+  function stop () {
+    stopListening()
+  }
 
-Router.prototype.start = function (run) {
-  var self = this
-
-  window.addEventListener('popstate', self.onpopstate)
-
-  if (run !== false) {
-    self.navigate(self.onpopstate(), {
-      replace: true,
-      trigger: false
+  function run (location) {
+    routes.some(function (route, index) {
+      var matched = match(route, base, location, callback)
+      if (matched) {
+        currentIndex = index
+        return true
+      }
     })
   }
-}
 
-Router.prototype.route =
-Router.prototype.add = function (path) {
-  var self = this
-  var callbacks = [].slice.call(arguments)
-  callbacks.shift()
+  function navigate (name, params, options) {
+    options = extend({
+      replace: false,
+      state: {}
+    }, options)
 
-  if (path === '*') {
-    path = /.*/
-  }
-  self.routes.push(new Route(path, callbacks))
+    var action = options.replace ? 'replaceState' : 'pushState'
+    var route = findByName(routes, name)
+    var path
 
-  return self
-}
+    if (!route) {
+      throw Error('No route found with name ' + name)
+    }
 
-Router.prototype.navigate = function (path, options) {
-  var self = this
-
-  options = extend({
-    trigger: true,
-    replace: false,
-    title: null,
-    state: {}
-  }, options)
-
-  path = this.base + path
-
-  var title = options.title
-  var action = options.replace ? 'replaceState' : 'pushState'
-
-  window.history[action](options.state, title, path)
-
-  if (options.trigger) {
-    self.run({ state: options.state })
-  }
-}
-
-Router.prototype.run = function (event) {
-  event = event || {}
-  var self = this
-  var pathname = window.location.pathname
-  var finalCallback = self.callback
-
-  if (pathname.indexOf(self.base) > -1) {
-    pathname = pathname.slice(self.base.length)
+    path = base + route.generate(params)
+    history[action](options.state, path)
   }
 
-  self.routes.some(function (route) {
-    var path = pathname || '/'
-    return route.match(path, event, finalCallback)
-  })
+  function add (name, path) {
+    var callbacks = [].slice.call(arguments, 2)
+    routes.push(routeFactory(name, path, callbacks))
 
-  return pathname
+    return this
+  }
+
+  return {
+    start: start,
+    stop: stop,
+    add: add,
+    route: add,
+    navigate: navigate,
+    get current () {
+      return routes[currentIndex]
+    },
+    history: history
+  }
 }
 
-Router.prototype.stop = function () {
-  var self = this
-  window.removeEventListener('popstate', self.onpopstate)
-}
-
-Router.Route = Route
-
-function Route (path, callbacks) {
-  var self = this
-  var w = self.ware = ware()
-  self.keys = []
-  self.re = pathToExp(path, self.keys)
-
-  callbacks.forEach(function (fn) {
-    w.use(fn)
-  })
-}
-
-Route.prototype.match = function (path, event, callback) {
-  var self = this
-  var key, value, len, i
+function match (route, base, location, callback) {
   var obj = {}
   var params = obj.params = []
-  obj.event = event || {}
-  obj.state = obj.event.state || {}
+  var done = typeof callback === 'function' ? callback : null
+  var pathname = location.pathname
 
-  var result = self.re.exec(path)
-
-  if (!result) {
-    return false
+  if (pathname.indexOf(base) > -1) {
+    pathname = pathname.slice(base.length)
   }
 
+  var result = route.re.exec(pathname)
+
+  if (!result) return false
+
   // https://github.com/visionmedia/page.js/blob/master/index.js#L495-L501
+  var key, value, len, i
+
   for (i = 1, len = result.length; i < len; ++i) {
-    key = self.keys[i - 1]
+    key = route.keys[i - 1]
     value = window.decodeURIComponent(result[i])
     if (value !== undefined || !(hasOwnProperty.call(params, key.name))) {
       params[key.name] = value
     }
   }
 
-  if (typeof callback === 'function') {
-    this.ware.run(obj, callback)
-  } else {
-    this.ware.run(obj)
-  }
+  obj.location = location
+  obj.route = route // really?
+
+  route.ware.run(obj, done)
 
   return true
+}
+
+function routeFactory (name, path, callbacks) {
+  var route = {
+    name: name,
+    keys: [],
+    path: path,
+    re: null,
+    generate: pathToExp.compile(path),
+    ware: ware()
+  }
+
+  callbacks.forEach(route.ware.use.bind(route.ware))
+  route.re = pathToExp(path, route.keys)
+
+  return route
+}
+
+function findByName (arr, name) {
+  var i
+
+  arr.some(function (item, index) {
+    if (item.name === name) {
+      i = index
+      return true
+    }
+  })
+
+  return arr[i]
 }

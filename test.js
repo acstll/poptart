@@ -1,19 +1,14 @@
+
 var test = require('tape')
+var createHistory = require('history/lib/createBrowserHistory')
 
-var Router = require('./')
-var router
+var createRouter = require('./')
+var history = createHistory()
 
-var DURATION = 0
-
-function defer (fn) {
-  DURATION = DURATION + 50
-  return setTimeout(fn, DURATION)
-}
-
-test('callbacks, start', function (t) {
+test('Callbacks, start and stop', function (t) {
   t.plan(4)
 
-  router = new Router(null, function (err, obj) {
+  var router = createRouter(history, null, function final (err, obj) {
     if (err) {
       t.skip()
     }
@@ -33,123 +28,149 @@ test('callbacks, start', function (t) {
     next()
   }
 
-  router.add('/', cb1, cb2, cb3)
+  router.add('home', '/', cb1, cb2, cb3)
+
   router.start()
 
-  router.callback = null
+  router.stop()
+
+  router.history.pushState('/stop') // `history` reference is there
 })
 
-test('navigate', function (t) {
-  t.plan(7)
+test('Navigate', function (t) {
+  t.plan(3)
 
-  var state = { a: 1 }
+  var router = createRouter(history)
 
-  function cb1 (obj, next) {
-    t.ok(Array.isArray(obj.params), '`params` passed and is array')
-    t.equal(obj.params.name, 'bar', 'params values are ok (1)')
-    t.equal(obj.params.id, '1', 'params values ok are (2)')
-    next()
-  }
-  function cb2 (obj, next) {
-    t.ok(obj.event, 'event object is there')
-    t.equal(obj.state, state, 'passed in state is there and ok')
-    next()
-  }
-  function cb3 (obj, next) {
-    t.equal(typeof obj.state, 'object', 'obj.state is an empty object by default')
-    next()
-  }
+  router.add('foo', '/foo/:id')
+  router.add('baz', '/baz')
 
-  router.add('/foo/:name/:id', cb1, cb2)
-  router.add('/foo/:name', cb3)
+  router.start()
 
-  defer(function () {
-    router.navigate('/foo/bar/1', { state: state })
-    t.equal(window.location.pathname, '/foo/bar/1', 'pathname on windows gets set')
-  })
+  t.throws(function () {
+    router.navigate('foo')
+  }, 'throws is called without params when needed')
 
-  defer(function () {
-    router.navigate('/foo/baz')
-  })
+  router.navigate('foo', { id: 1 })
+  t.equal(window.location.pathname, '/foo/1', 'works with params')
+
+  router.navigate('baz')
+  t.equal(window.location.pathname, '/baz', 'works without params')
+
+  router.stop()
 })
 
-test('popstate event object', function (t) {
+test('Route, current', function (t) {
+  t.plan(3)
+
+  var router = createRouter(history)
+
+  router.add('foo', '/foo')
+  router.add('bar', '/bar')
+
+  router.start()
+
+  router.navigate('foo')
+  t.equal(router.current.name, 'foo', '`current` works')
+
+  router.navigate('bar')
+  t.equal(router.current.name, 'bar', 'for real')
+  t.equal(typeof router.current.generate, 'function', 'and has `generate` fn')
+
+  router.stop()
+})
+
+test('Base, other than /', function (t) {
   t.plan(2)
 
-  router.routes.shift()
-  router.add('/', function (obj, next) {
-    t.equal(obj.event.type, 'popstate', 'passed in correctly')
+  var router = createRouter(history, '/api')
+
+  router.add('home', '/', function (obj, next) {
+    t.pass('home..')
     next()
   })
-
-  defer(function () {
-    window.history.go(-2)
+  router.add('resource', '/resource/:id', function (obj, next) {
+    t.equal(window.location.pathname, '/api/resource/123', 'works correctly')
   })
 
-  router.add('/foo', function (obj, next) {
-    t.equal(obj.event.type, undefined, 'faux-popstate event object passed in too')
-    next()
-  })
+  router.start()
 
-  defer(function () {
-    router.navigate('/foo')
-  })
+  router.navigate('home')
+  router.navigate('resource', { id: 123 })
+
+  router.stop()
 })
 
-test('{ trigger: false }, start(false)', function (t) {
+test('replaceState', function (t) {
   t.plan(1)
 
-  function cb () {
-    t.skip('won’t trigger')
-  }
+  var router = createRouter(history)
 
-  router.add('/ok', cb)
-
-  defer(function () {
-    router.navigate('/ok', { trigger: false })
-    router.stop()
-    router.start(false)
-  })
-
-  cb()
-})
-
-test('* as not found', function (t) {
-  t.plan(2)
-
-  router.add('/found', function (obj, next) {
-    t.pass('not triggered when something matched')
-    next()
-  })
-  router.add('*', function (obj, next) {
-    t.pass('triggered otherwise ' + obj.state)
+  router.add('replace', '/beep', function (obj, next) {
+    t.equal(obj.location.action, 'REPLACE', 'works')
     next()
   })
 
-  defer(function () {
-    router.navigate('/found', { state: 1 })
-    router.navigate('/not-found', { state: 2 })
-  })
+  router.start()
+
+  router.navigate('replace', null, { replace: true })
+
+  router.stop()
 })
 
-test('base other than /', function (t) {
-  t.plan(1)
+test('Params, location and state', function (t) {
+  t.plan(8)
 
-  router.base = '/api'
-  router.routes.pop() // remove '*' route
+  var router = createRouter(history)
 
-  router.add('/resource/:id', function (obj, next) {
-    t.equal(obj.params.id, '123', 'works')
+  router.add('params', '/:slug/filter/:filter/tag/:tag', function (obj, next) {
+    t.ok(Array.isArray(obj.params), 'params is array')
+    t.equal(Object.keys(obj.params).length, 3, 'has proper keys')
+    t.equal(obj.params.slug, 'yep')
+    t.equal(obj.params.filter, 'foo')
+    t.equal(obj.params.tag, 'bar', '..and values')
+    t.equal(typeof obj.location, 'object', '`location` is there')
+    t.equal(obj.location.state.a, 1, 'and is correct')
+    next()
   })
 
-  defer(function () {
-    router.navigate('/api', { trigger: false })
-    router.navigate('/resource/123')
+  router.add('noState', '/no-state', function (obj) {
+    t.equal(typeof obj.location.state, 'object', 'state is empty object when missing')
   })
 
-  defer(function () {
-    router.base = ''
-    router.stop()
-    router.navigate('/done')
+  router.start()
+
+  router.navigate('params', {
+    slug: 'yep',
+    filter: 'foo',
+    tag: 'bar'
+  }, { state: { a: 1 }})
+
+  router.navigate('noState')
+
+  router.stop()
+})
+
+test('* for not found', function (t) {
+  t.plan(4)
+
+  var router = createRouter(history)
+
+  router.add('one', '/1', function () { t.pass() })
+  router.add('two', '/2', function () { t.pass() })
+  router.add('three', '/3', function () { t.pass() })
+  router.add('notFound', '*', function () {
+    t.pass('not found matched just once')
   })
+
+  history.replaceState(null, '/3')
+
+  router.start()
+
+  router.navigate('two')
+  router.navigate('one')
+
+  history.pushState(null, '/done')
+
+  router.stop()
 })
