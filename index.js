@@ -2,11 +2,13 @@
 var ware = require('ware')
 var pathToExp = require('path-to-regexp')
 var extend = require('xtend')
+// var omit = require('lodash.omit')
 
 /*
   TODO
-  - check route name exists to avoid duplicates
-  - splats: https://github.com/aaronblohowiak/routes.js/blob/master/index.js#L88
+  - Check route name (or path?) exists to avoid duplicates
+  - Improve params if possible
+    https://www.npmjs.com/package/path-to-regexp#suffixed-parameters
 */
 
 module.exports = function router (history, base, callback) {
@@ -87,19 +89,21 @@ function match (route, base, location, callback) {
 
   if (!result) return false
 
-  // https://github.com/visionmedia/page.js/blob/master/index.js#L495-L501
   var key, value, len, i
-
   for (i = 1, len = result.length; i < len; ++i) {
     key = route.keys[i - 1]
-    value = window.decodeURIComponent(result[i])
+    value = decodeURIComponent(result[i])
     if (value !== undefined || !(hasOwnProperty.call(params, key.name))) {
       params[key.name] = value
     }
   }
 
   obj.location = location
-  obj.route = route // really?
+  obj.route = {
+    name: route.name,
+    path: route.path,
+    generate: route.generate
+  }
 
   route.ware.run(obj, done)
 
