@@ -1,6 +1,7 @@
 
 var test = require('tape')
-var createHistory = require('history/lib/createBrowserHistory')
+var historyType = process.argv[2] === '--browser' ? 'createBrowserHistory' : 'createMemoryHistory'
+var createHistory = require('history')[historyType]
 
 var createRouter = require('./')
 var history = createHistory()
@@ -41,6 +42,9 @@ test('Navigate', function (t) {
   t.plan(4)
 
   var router = createRouter(history)
+  var __location
+
+  var off = history.listen(function (l) { __location = l })
 
   router.add('foo', '/foo/:id')
   router.add('baz', '/baz')
@@ -56,12 +60,13 @@ test('Navigate', function (t) {
   }, 'throws if route doesn’t exist')
 
   router.navigate('foo', { id: 1 })
-  t.equal(window.location.pathname, '/foo/1', 'works with params')
+  t.equal(__location.pathname, '/foo/1', 'works with params')
 
   router.navigate('baz')
-  t.equal(window.location.pathname, '/baz', 'works without params')
+  t.equal(__location.pathname, '/baz', 'works without params')
 
   router.stop()
+  off()
 })
 
 test('Route, current', function (t) {
@@ -94,7 +99,7 @@ test('Base, other than /', function (t) {
     next()
   })
   router.add('resource', '/resource/:id', function (obj, next) {
-    t.equal(window.location.pathname, '/api/resource/123', 'works correctly')
+    t.equal(obj.location.pathname, '/api/resource/123', 'works correctly')
   })
 
   router.start()
@@ -123,7 +128,7 @@ test('replaceState', function (t) {
 })
 
 test('Params, location and state', function (t) {
-  t.plan(8)
+  t.plan(12)
 
   var router = createRouter(history)
 
@@ -135,6 +140,10 @@ test('Params, location and state', function (t) {
     t.equal(obj.params.tag, 'bar', '..and values')
     t.equal(typeof obj.location, 'object', '`location` is there')
     t.equal(obj.location.state.a, 1, 'and is correct')
+    t.equal(Object.keys(obj.route).length, 3, '`route` has proper keys')
+    t.equal(obj.route.name, 'params')
+    t.equal(obj.route.path, '/:slug/filter/:filter/tag/:tag')
+    t.equal(typeof obj.route.generate, 'function', '..and values')
     next()
   })
 
