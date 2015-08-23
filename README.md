@@ -22,7 +22,7 @@ var router = createRouter(history)
 
 function callback (obj, next) {
   var name = obj.params.name; // url params
-  var foo = obj.location.state; // your state object
+  var foo = obj.location.state.foo; // your state object
   
   // history's location object is available
   // http://rackt.github.io/history/stable/Location.html
