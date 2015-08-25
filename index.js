@@ -5,7 +5,9 @@ var extend = require('xtend')
 
 /*
   TODO
+  - Accept path-to-regexp options (use options object in factory?)
   - Check route name (or path?) exists to avoid duplicates
+  - Revise `navigate` params to possibly just take a single param object 
   - Improve params if possible
     https://www.npmjs.com/package/path-to-regexp#suffixed-parameters
 */
