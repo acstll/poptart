@@ -7,10 +7,12 @@ JavaScript client-side router.
 With [npm](http://npmjs.org) do:
 
 ```bash
-npm install acstll/poptart --save
+npm install acstll/poptart history --save
 ```
 
 you see this is not on the npm registry yet.
+
+You also need the [`history`](http://npm.im/history) module.
 
 ## Usage
 
@@ -51,7 +53,7 @@ router.navigate('hello', { name: 'world' }, {
 
 `createRouter(history[, base, callback])`
 
-- `history` [history](http://npm.im/history)
+- `history` A [history](http://npm.im/history) object.
 - `base` (String) should be set in case you're not operating at the root path `/` of the domain.
 - `callback` is fired after all callbacks of every matched route have been called. It should follow this signature `function (err, obj) {}`.
 
@@ -79,7 +81,7 @@ Also checkout the [live demo](http://forbeslindesay.github.io/express-route-test
 
 `router.start()`
 
-Router starts listening for `popstate` events.
+Router starts listening for route changes.
 
 ### \#navigate
 
@@ -99,7 +101,7 @@ This will update the browser's URL and fire any callbacks.
 
 `router.stop()`
 
-Stop listening for `popstate` events.
+Stop listening for route changes.
 
 ## License
 
