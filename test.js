@@ -35,7 +35,15 @@ test('Callbacks, start and stop', function (t) {
 
   router.stop()
 
-  router.history.pushState('/stop') // `history` reference is there
+  router.history.pushState('/stop')
+})
+
+test('`history` reference', function (t) {
+  t.plan(1)
+
+  var router = createRouter(history)
+
+  t.equal(router.history, history, 'is there')
 })
 
 test('Navigate', function (t) {
