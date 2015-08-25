@@ -136,7 +136,7 @@ test('replaceState', function (t) {
 })
 
 test('Params, location and state', function (t) {
-  t.plan(12)
+  t.plan(13)
 
   var router = createRouter(history)
 
@@ -159,6 +159,10 @@ test('Params, location and state', function (t) {
     t.equal(typeof obj.location.state, 'object', 'state is empty object when missing')
   })
 
+  router.add('undefined', '/no-param/:num?', function (obj, next) {
+    t.notEqual(typeof obj.params.num, 'string', 'optional undefined params are undefined and no strings')
+  })
+
   router.start()
 
   router.navigate('params', {
@@ -168,6 +172,8 @@ test('Params, location and state', function (t) {
   }, { state: { a: 1 }})
 
   router.navigate('noState')
+
+  router.navigate('undefined', { num: null })
 
   router.stop()
 })

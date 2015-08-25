@@ -7,7 +7,7 @@ var extend = require('xtend')
   TODO
   - Accept path-to-regexp options (use options object in factory?)
   - Check route name (or path?) exists to avoid duplicates
-  - Revise `navigate` params to possibly just take a single param object 
+  - Revise `navigate` params to possibly just take a single param object
   - Improve params if possible
     https://www.npmjs.com/package/path-to-regexp#suffixed-parameters
 */
@@ -96,7 +96,7 @@ function match (route, base, location, callback) {
   var key, value, len, i
   for (i = 1, len = result.length; i < len; ++i) {
     key = route.keys[i - 1]
-    value = decodeURIComponent(result[i])
+    value = typeof result[i] === 'string' ? decodeURIComponent(result[i]) : void 0
     if (value !== undefined || !(hasOwnProperty.call(params, key.name))) {
       params[key.name] = value
     }
