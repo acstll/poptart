@@ -2,7 +2,6 @@
 var ware = require('ware')
 var pathToExp = require('path-to-regexp')
 var extend = require('xtend')
-// var omit = require('lodash.omit')
 
 /*
   TODO
@@ -62,17 +61,20 @@ module.exports = function router (history, base, callback) {
     return this
   }
 
-  return {
+  var router = {
     start: start,
     stop: stop,
     add: add,
     route: add,
     navigate: navigate,
-    get current () {
-      return routes[currentIndex]
-    },
     history: history
   }
+
+  return Object.defineProperty(router, 'current', {
+    get: function () {
+      return routes[currentIndex]
+    }
+  })
 }
 
 function match (route, base, location, callback) {
