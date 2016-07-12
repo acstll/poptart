@@ -45,7 +45,7 @@ module.exports = function router (history, base, callback) {
     if (typeof location === 'string') {
       location = base + location
     } else if (typeof location !== 'undefined') {
-      location.pathname = base + location.pathname 
+      location.pathname = base + location.pathname
     }
 
     return history[action](location)
@@ -106,7 +106,7 @@ function match (route, base, location, callback) {
   var key, value, len, i
   for (i = 1, len = result.length; i < len; ++i) {
     key = keys[i - 1]
-    value = 'string' == typeof result[i] ? decodeURIComponent(result[i]) : result[i]
+    value = typeof result[i] === 'string' ? decodeURIComponent(result[i]) : result[i]
     if (key) {
       params[key.name] = value
     }
