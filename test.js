@@ -63,9 +63,9 @@ test('Push and generate', function (t) {
     router.generate('/foo/:id')
   }, '`generate` throws if called without params when needed')
 
-  /*t.throws(function () {
+  /* t.throws(function () {
     router.push('/666')
-  }, '`push` throws if route doesn’t exist')*/
+  }, '`push` throws if route doesn’t exist') */
 
   router.push(router.generate('/foo/:id', { id: 1 }))
   t.equal(__location.pathname, '/foo/1', 'work with params')
@@ -148,7 +148,7 @@ test('Params, location and state', function (t) {
     t.equal(location.params.tag, 'bar', '..and values')
     t.equal(location.state.a, 1, 'state is there and is correct')
     t.equal(location.__path, '/:slug/filter/:filter/tag/:tag', '`__path` is there')
-    t.equal(typeof location.generate, 'function', '..and `generarte`')
+    t.equal(typeof location.generate, 'function', '..and `generate`')
     next()
   })
 
@@ -167,7 +167,7 @@ test('Params, location and state', function (t) {
       slug: 'yep',
       filter: 'foo',
       tag: 'bar'
-    }), 
+    }),
     state: { a: 1 }
   })
   router.push('/no-state')
@@ -196,6 +196,28 @@ test('* for not found', function (t) {
   router.push('/one')
 
   history.push('/done')
+
+  router.stop()
+})
+
+test('End-of-chain callback', function (t) {
+  t.plan(1)
+
+  var router = createRouter(history, null, final)
+
+  function final (err, location) {
+    if (err) {
+      return
+    }
+    t.equal(location.pathname, '/good-bye', 'fires')
+  }
+
+  router.add('/good-bye')
+
+  router.start()
+
+  router.push('/good-bye')
+  router.push('/meh')
 
   router.stop()
 })
